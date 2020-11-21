@@ -1,13 +1,26 @@
-/* 
+/*
 Note: This is not an actual source file. The whole file has been commented out to prevent errors.
 
 TeamSpeakMonitor Revisions
 
-Current version 3.00
+Current version 3.02
+
+3.02 - Minor change to make the message scroll twice to say someone logged in or out for a
+	   better chance it's seen!
+	 - Added a count of how many times the connection to the server is reconnected from errors
+	   and if it happens too many times (10) then reset the ESP8266 as there is a WiFi connection
+	   problem that can only be solved with a reset!
+
+3.01 - Fixed a bug in the code for checking names logged out. It was using the wrong list
+       of names to create the scroll message.
+     - Fixed a bug in the code for checking names logged in. It was comparing names from the
+       same list! Amazing how it still showed new names though!
+     - Added a bit of clean up to the lists of names so that the list always contains empty
+       strings after the last name.
 
 3.00 - Project copied and modified/sanitized for release on GitHub.
      - Added extra comments for clarity of what each part of the program is doing.
-
+	 
 2.31 - Added a line in the scroller routine to also reset the scrollerPos when setting 
        currentScroller to the next message.
      - Added commas between names in scroll message when more than one person logs in/out.

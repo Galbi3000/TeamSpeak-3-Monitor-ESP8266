@@ -30,11 +30,10 @@ String content;
 #define maxChannels 128
 #define maxClients 32
 
-// Refresh times for channel and client lists. (1000 = ~1 second)
+// Refresh times for channel and client lists. (1000 = 1 second)
 #define channelRefresh 30000
 #define clientRefresh 4000
 
-// Structure definition for a TeamSpeak 3 channel
 typedef struct
 {
   int ID;
@@ -43,7 +42,6 @@ typedef struct
   String channelName;
 } ts3Channel;
 
-// Structure definition for a TeamSpeak 3 client
 typedef struct
 {
   int ID;
@@ -51,29 +49,18 @@ typedef struct
   String clientName;
 } ts3Client;
 
-// Variables and constants for the TeamSpeak 3 server telnet access
 WiFiClient telnet;                            // The telnet client connection
 const char* telnetHost = "192.168.0.110";     // The host address for the TeamSpeak 3 server
 const int telnetPort = 10011;                 // The TeamSpeak 3 query server port
 const char* queryLogin = "serveradmin";       // The login name for the query server
-const char* queryPass = "querypass";          // The password for the query server
-/* NOTE:
-  The IP address I have here is the LAN IP address to my TS3 server that I run on a
-  dedicated PC on my LAN. This is obviously not accessable from the internet as this IP!
+//const char* queryLogin = "ts3mon";       // The login name for the query server
 
-  The login name used above is the default one for the admin of the server.
-  The password associated with it is provided by the server the first time it is run.
-  If you are using a hosted server you may not have access to this login name. You may need
-  to be given a telnet access password for your server login. As I do not use a hosting
-  service I do not know the specifics for this. Speak to a representative for your hosting
-  service provider for further information about how they supply telnet access to the server.
-
-  The telnetPort value above is the default telnet port number for TS3 servers. This might be
-  different for hosted servers. Again, speak to your TS3 server hosting provider for details.
-*/
+//const char* queryPass = "5WSyp+Pd";           // Old serveradmin password
+//const char* queryPass = "oLqw8jM4";           // Password for ts3mon
+const char* queryPass = "ftGu61dx";             // New serveradmin password
 
 String okResponse = "error id=0 msg=ok";      // The query server's success response
-int loginOK, errorCount = 0;
+int loginOK, errorCount = 0, reconnectCount = 0;
 
 String ts3ServerName;
 
@@ -86,11 +73,11 @@ int numClients;           // The number of clients logged in to the server
 int oldNumClients;        // For tracking people leaving/joining the server
 int clientCount;          // The number of clients that are not Glabi!
 
-const int statusLED = 2;  // The on board blue LED (currently not actually used!)
-const int greenLED = 14;  // The green LED used to indicate users logged on to TS.
+const int statusLED = 2;  // The on board blue LED
+const int LED = 14;       // The LED used to indicate users logged on to TS.
 
 int statusLEDState;
-int greenLEDState;
+int LEDState;
 
 unsigned long timeoutChan, timeoutClient;
 
@@ -98,16 +85,10 @@ unsigned long timeoutChan, timeoutClient;
 // OLED Display and message scroller variables and defines
 //
 
-// Refresh time for the OLED display. (1000 = ~1 second)
-#define displayRefresh 250
+// Refresh time for the OLED scroller display. (1000 = 1 second)
+#define displayRefresh 200
 
-// Scroller related variables. These are in Globals.h instead of OLEDDisplay.h for use in
-// TeamSpeakFunctions.h
-// The scroller system can queue one message while another is already being displayed.
-
-String scrollerDisplay;   // Used for the section of the message shown on the display
-String scrollerMessage;   // This is the next message to be displayed
-String currentScroller;   // This is the current message being displayed when the scroller is active
+String scrollerDisplay, scrollerMessage, currentScroller;
 int showScroller = 0; // Set this to the number of times a message should scroll past the screen.
 int scrollerPos = 0;  // Position in the message for the scroller display.
 unsigned long timeoutDisplay;
@@ -129,4 +110,3 @@ void sprintln(String str)
   Serial.println(str);
   #endif  
 }
-

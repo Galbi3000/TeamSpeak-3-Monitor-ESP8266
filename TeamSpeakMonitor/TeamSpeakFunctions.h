@@ -51,7 +51,7 @@ String extractData(String source, String field)
     return "";
 
   int index2 = source.indexOf("=", index) + 1;
-  if (index2 == -1)
+  if (index2 == 0)
     return "";
 
   for (int i=index2; i<source.length(); i++)
@@ -319,9 +319,7 @@ void refreshClients()
             tmp = extractData(clientData, "cid");
             clients[numClients].channelID = tmp.toInt();
             clients[numClients].clientName = extractData(clientData, "client_nickname");
-
-            // This commented out if line can be used to ignore certain client names, like bot users, for the alternative clientCount used for the LED
-//            if (clients[numClients].clientName != "MusicSource" && clients[numClients].clientName != "Galbi3000")
+            if (clients[numClients].clientName != "Galbi3000" && clients[numClients].clientName != "MusicSource" && clients[numClients].clientName != "GalbiOnTab" && clients[numClients].clientName != "GalbiOnPhone")
               clientCount++;
             numClients++;
           }

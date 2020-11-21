@@ -16,8 +16,8 @@
  *  See Revisions tab for details of version changes.
  */
 
-#define SERIAL_ON 0         // Set to 1 to enable serial debug output
-#define DISPLAY_ON_TIMER 0  // Set to 1 to enable buggy timer interupt for display redraw
+#define SERIAL_ON 0
+#define DISPLAY_ON_TIMER 0
 
 #include "Globals.h"
 #include "TeamSpeakFunctions.h"
@@ -28,24 +28,25 @@ void setup()
 {
   // Initialize the OLED display and put the device name at the top of the display
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setRotation(2);
   display.clearDisplay();           // Clears the display buffer
   display.setTextSize(2);           // Set the text size to 2
-  display.setTextColor(WHITE);      // Set the text colour to white. The OLED display used only has 2 colours, black (default back colour) and white (whatever the colour is for your OLED display, could actually be blue or yellow!).
+  display.setTextColor(WHITE);      // Set the text colour to white. The OLED display used only has 2 colours, black (default back colour) and white.
   display.setFont(&TITLE_FONT);
   display.setTextSize(1);
   display.setCursor(0,12);
   display.println("TS3 Monitor");
-  display.setFont();                // Reset the font to the library default
-  display.setCursor(0,16);          // Position the text cursor to right under the title
+  display.setFont();
+  display.setCursor(0,16);
   display.display();                // Refresh the OLED display to show the changes made
 
   // Initialise the LEDs
   pinMode(statusLED, OUTPUT);
-  pinMode(greenLED, OUTPUT);
-  digitalWrite(statusLED, 1);       // The NodeMCU status LED is on when low so 1 = off!
-  digitalWrite(greenLED, 0);
+  pinMode(LED, OUTPUT);
+  digitalWrite(statusLED, 1);
+  digitalWrite(LED, 0);
   statusLEDState = 1;
-  greenLEDState = 0;
+  LEDState = 0;
 
   // Start the serial connection
   #if SERIAL_ON
@@ -64,7 +65,7 @@ void setup()
   display.println("Connecting to WiFi..");
   display.display();
 
-  // Wait for connection (Output to serial an extra . every half second!)
+  // Wait for connection
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
@@ -76,7 +77,8 @@ void setup()
   sprint("Connected to ");
   sprintln(ssid);
   sprint("IP address: ");
-  sprintln(String(WiFi.localIP()));
+  //sprintln(String(WiFi.localIP()));
+  sprintln(WiFi.localIP().toString());
 
   // Display connection status on OLED screen
   display.println("Connected to ");
@@ -114,16 +116,19 @@ void setup()
   timeoutChan = millis() + channelRefresh;   // Set the timeout for Channel list refresh so that it's run once at start
   timeoutClient = millis() + clientRefresh;  // Do the same for client list refreshing
   errorCount = 0;
+  reconnectCount = 0;
 
   // Display a finished message on the OLED screen and wait 3 seconds to allow reading of the screen
   display.println("Finished setup.");
   display.display();
   delay(3000);
 
-  initDisplayTimer();   // Initialize the display redraw timer (if it's enabled!)
+//  scrollerMessage = "          This is a test scroll message.          ";
+//  showScroller = 3;
+
+  initDisplayTimer();   // If the display is on a timer interrupt then this will initialize the timer
 }
 
-// Main program loop
 void loop()
 {
   // HTTP first
@@ -132,6 +137,9 @@ void loop()
   // Refresh the channel and client lists from the TeamSpeak server (the functions handle the timing)
   refreshChannels();
   refreshClients();
+
+  if (errorCount == 0)
+    reconnectCount = 0;
 
   // If the number of clients has changed then see what names have been added/removed
 
@@ -149,9 +157,9 @@ void loop()
       if (!found)
       {
         if (message == "")
-          message = clients[i].clientName;
+          message = oldNames[i];
         else
-          message += ", " + clients[i].clientName;
+          message += ", " + oldNames[i];
       }
     }
     message += " logged out.";
@@ -165,7 +173,7 @@ void loop()
       int found = 0;
       for (int j = 0; j < oldNumClients; j++)
       {
-        if (oldNames[i] == oldNames[j])
+        if (clients[i].clientName == oldNames[j])
           found = 1;
       }
       if (!found)
@@ -177,13 +185,21 @@ void loop()
       }
     }
     message += " logged in.";
+    message += "........ " + message;
     scrollMessage(message);
   }
 
   if (oldNumClients != numClients)
   {
-    for (int i = 0; i < maxClients; i++)
+    int i;
+    for (i = 0; i < numClients; i++)
       oldNames[i] = clients[i].clientName;
+    // Make sure the ends of the lists are empty, may cause issues if there are names still in place that shouldn't be there
+    for (; i < maxClients; i++)
+    {
+      oldNames[i] = "";
+      clients[i].clientName = "";
+    }
     oldNumClients = numClients;
   }
   
@@ -197,15 +213,41 @@ void loop()
     telnet.stop();
     loginServerQuery();
     errorCount = 0;
+    reconnectCount += 1;
     scrollMessage("ERROR: Reconnecting to TS3 Server");
-  }
-  
-  int state = greenLEDState;
-  if (clientCount == 0 && greenLEDState == 1)
-    greenLEDState = 0;
-  else if (clientCount > 0 && greenLEDState == 0)
-    greenLEDState = 1;    
-  if (state != greenLEDState)
-    digitalWrite(greenLED, greenLEDState);
-}
 
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      sprintln("Lost WiFi connection!");
+      
+      // Connect to the WiFi router
+      WiFi.begin(ssid, password);
+      
+      // Wait for connection
+      while (WiFi.status() != WL_CONNECTED)
+      {
+        // Output connecting message to serial
+        sprintln("");
+        sprint("Reconnecting to WiFi");
+  
+        delay(500);
+        sprint(".");
+      }  
+      sprintln("");
+    }
+  }
+
+  if (reconnectCount == 10)
+  {
+    sprintln("Tried reconnecting 10 times, rebooting!");
+    ESP.restart();
+  }
+
+  int state = LEDState;
+  if (clientCount == 0 && LEDState == 1)
+    LEDState = 0;
+  else if (clientCount > 0 && LEDState == 0)
+    LEDState = 1;    
+  if (state != LEDState)
+    digitalWrite(LED, LEDState);
+}

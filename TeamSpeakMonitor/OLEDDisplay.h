@@ -15,21 +15,6 @@ Adafruit_SSD1306 display(OLED_RESET);
 #endif
 */
 
-#if DISPLAY_ON_TIMER
-extern "C" {
-#include "user_interface.h"
-}
-os_timer_t displayTimer;
-#endif
-
-void initDisplayTimer(void)
-{
-#if DISPLAY_ON_TIMER
-  os_timer_setfn(&displayTimer, timerCallback, NULL);   // Set the timer callback function
-  os_timer_arm(&displayTimer, displayRefresh, true);    // Set the timer to a quarter of a second
-#endif
-}
-
 void scrollMessage(String message)
 {
   if (scrollerMessage == "")
@@ -99,21 +84,6 @@ void drawDisplay()
   display.display();
 }
 
-#if DISPLAY_ON_TIMER
-
-// Display refresh timer callback
-void timerCallback(void *pArg)
-{
-  drawDisplay();
-}
-
-void updateDisplay()
-{
-  // Do nothing when display is on interrupt timer
-}
-
-#else
-
 void updateDisplay()
 {
   if (millis() - timeoutDisplay > displayRefresh)
@@ -122,6 +92,3 @@ void updateDisplay()
     timeoutDisplay = millis();
   }
 }
-
-#endif
-

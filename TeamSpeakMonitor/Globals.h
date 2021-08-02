@@ -11,8 +11,8 @@
 // WiFi variables
 //
 
-const char* ssid     = "your-ssid";
-const char* password = "your-password";
+const char* ssid = "your-ssid";
+const char* password = "your-pass";
 
 //
 // HTML Server variables
@@ -53,11 +53,7 @@ WiFiClient telnet;                            // The telnet client connection
 const char* telnetHost = "192.168.0.110";     // The host address for the TeamSpeak 3 server
 const int telnetPort = 10011;                 // The TeamSpeak 3 query server port
 const char* queryLogin = "serveradmin";       // The login name for the query server
-//const char* queryLogin = "ts3mon";       // The login name for the query server
-
-//const char* queryPass = "5WSyp+Pd";           // Old serveradmin password
-//const char* queryPass = "oLqw8jM4";           // Password for ts3mon
-const char* queryPass = "ftGu61dx";             // New serveradmin password
+const char* queryPass = "server-pass";        // New serveradmin password
 
 String okResponse = "error id=0 msg=ok";      // The query server's success response
 int loginOK, errorCount = 0, reconnectCount = 0;

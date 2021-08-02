@@ -17,7 +17,6 @@
  */
 
 #define SERIAL_ON 0
-#define DISPLAY_ON_TIMER 0
 
 #include "Globals.h"
 #include "TeamSpeakFunctions.h"
@@ -125,8 +124,6 @@ void setup()
 
 //  scrollerMessage = "          This is a test scroll message.          ";
 //  showScroller = 3;
-
-  initDisplayTimer();   // If the display is on a timer interrupt then this will initialize the timer
 }
 
 void loop()
@@ -163,6 +160,7 @@ void loop()
       }
     }
     message += " logged out.";
+    message += "........ " + message;
     scrollMessage(message);
   }
   else if (numClients > oldNumClients)  // Someone logged in
@@ -203,7 +201,7 @@ void loop()
     oldNumClients = numClients;
   }
   
-  // Update the OLED display (the function handles timing, does nothing if the display is on a timer)
+  // Update the OLED display (the function handles timing)
   updateDisplay();
 
   if (errorCount >= 5)
